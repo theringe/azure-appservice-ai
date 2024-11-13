@@ -1,0 +1,2 @@
+# Test on 2024-11-13 with the specific version scikit-learn==1.5.2
+scikit-learn==1.0.2
