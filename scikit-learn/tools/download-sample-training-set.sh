@@ -4,6 +4,7 @@ ROOT="/mnt/data-and-model/scikit-learn/train"
 ZIP_URL="https://archive.ics.uci.edu/static/public/45/heart+disease.zip"
 ZIP_FILE="$ROOT/heart+disease.zip"
 UNZIP_FOLDER="$ROOT/heart_disease"
+TMP_DIR="/tmp/heart_disease"
 
 # Step 1: Download the ZIP file if it does not already exist
 if [ ! -f "$ZIP_FILE" ]; then
@@ -21,10 +22,14 @@ else
     echo "Folder heart_disease already exists, skipping creation."
 fi
 
-# Step 3: Unzip files if they have not already been extracted
+# Step 3: Unzip to a temporary local folder, then copy files using rsync
 if [ -z "$(ls -A "$UNZIP_FOLDER")" ]; then
-    echo "Unzipping files..."
-    unzip "$ZIP_FILE" -d "$UNZIP_FOLDER"
+    echo "Unzipping files to temporary directory..."
+    mkdir -p "$TMP_DIR"
+    unzip "$ZIP_FILE" -d "$TMP_DIR"
+    echo "Copying files to the target directory without preserving permissions or timestamps..."
+    rsync -a --no-perms --no-owner --no-group --no-times "$TMP_DIR"/ "$UNZIP_FOLDER"/
+    rm -r "$TMP_DIR"
 else
     echo "Files already unzipped, skipping extraction."
 fi
