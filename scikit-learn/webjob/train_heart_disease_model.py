@@ -7,11 +7,15 @@ import os
 import time
 import shutil
 
-# Step 1: Define root folder based on the OS
+# Step 1: Define root folder based on the OS and environment
 if os.name == 'nt':  # Windows
     ROOT = "Z:\\scikit-learn"
 else:  # Linux or other Unix-like OS
-    ROOT = "/mnt/data-and-model/scikit-learn"
+    # Check if running on Azure Web App by looking for the 'WEBSITE_INSTANCE_ID' environment variable
+    if "WEBSITE_INSTANCE_ID" in os.environ:
+        ROOT = "/data-and-model/scikit-learn"
+    else:
+        ROOT = "/mnt/data-and-model/scikit-learn"
 
 DATA_PATH = os.path.join(ROOT, "train", "heart_disease", "processed.cleveland.data")  # Adjust filename as needed
 MODEL_DIR = os.path.join(ROOT, "model")
