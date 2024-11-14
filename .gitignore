@@ -3,4 +3,4 @@
 
 # scikit-learn:
 # sample training model
-scikit-learn/heart_disease_model.joblib
+scikit-learn/api/heart_disease_model.joblib
