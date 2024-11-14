@@ -1,8 +1,14 @@
 #!/bin/bash
 
-ROOT="/mnt/data-and-model/scikit-learn/train"
+# Detect OS and set ROOT accordingly
+if [[ "$(uname)" == "Darwin" ]]; then
+    ROOT="/Volumes/data-and-model/scikit-learn/train"
+else
+    ROOT="/mnt/data-and-model/scikit-learn/train"
+fi
+
 ZIP_URL="https://archive.ics.uci.edu/static/public/45/heart+disease.zip"
-ZIP_FILE="$ROOT/heart+disease.zip"
+ZIP_FILE="$ROOT/heart_disease.zip"
 UNZIP_FOLDER="$ROOT/heart_disease"
 TMP_DIR="/tmp/heart_disease"
 

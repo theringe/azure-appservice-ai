@@ -6,10 +6,13 @@ import joblib
 import os
 import time
 import shutil
+import platform
 
 # Step 1: Define root folder based on the OS and environment
 if os.name == 'nt':  # Windows
     ROOT = "Z:\\scikit-learn"
+elif platform.system() == 'Darwin':  # macOS
+    ROOT = "/Volumes/data-and-model/scikit-learn"
 else:  # Linux or other Unix-like OS
     # Check if running on Azure Web App by looking for the 'WEBSITE_INSTANCE_ID' environment variable
     if "WEBSITE_INSTANCE_ID" in os.environ:
@@ -29,15 +32,9 @@ column_names = [
 df = pd.read_csv(DATA_PATH, names=column_names, na_values="?")
 
 # Step 3: Preprocess the data
-# Drop rows with missing values
-df = df.dropna()
-
-# Separate features and target
+df = df.dropna()  # Drop rows with missing values
 X = df.drop("target", axis=1)
-y = df["target"]
-
-# Binary classification (1 if heart disease, 0 if no heart disease)
-y = y.apply(lambda x: 1 if x > 0 else 0)
+y = df["target"].apply(lambda x: 1 if x > 0 else 0)  # Binary classification
 
 # Split into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -55,8 +52,6 @@ print(classification_report(y_test, y_pred))
 
 # Step 6: Save the trained model with timestamp and replace the final model file
 os.makedirs(MODEL_DIR, exist_ok=True)
-
-# Generate a unique model filename with epoch time
 epoch_time = int(time.time())
 timestamped_model_path = os.path.join(MODEL_DIR, f"heart_disease_model_{epoch_time}.joblib")
 joblib.dump(model, timestamped_model_path)
@@ -65,3 +60,19 @@ print(f"Model saved as {timestamped_model_path}")
 # Replace (or create) the final model file with the latest model
 shutil.copy(timestamped_model_path, FINAL_MODEL_PATH)
 print(f"Final model file updated to {FINAL_MODEL_PATH}")
+
+# Step 7: Copy to the ../api folder relative to this script, or to a specific location if on Azure Web App
+if os.name != 'nt' and "WEBSITE_INSTANCE_ID" in os.environ:
+    destination_path = "/home/site/wwwroot/api"
+else:
+    # Get the path of the current script's directory
+    script_dir = os.path.dirname(__file__)
+    # Define the destination as "../api" relative to the script directory
+    destination_path = os.path.join(script_dir, "..", "api")
+
+# Ensure the destination folder exists
+os.makedirs(destination_path, exist_ok=True)
+# Copy the final model to the destination
+destination_model_path = os.path.join(destination_path, "heart_disease_model.joblib")
+shutil.copy(FINAL_MODEL_PATH, destination_model_path)
+print(f"Model also copied to {destination_model_path}")

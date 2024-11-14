@@ -1,7 +1,11 @@
 #!/bin/bash
 
-# Set the root folder
-ROOT="/mnt/data-and-model"
+# Detect OS and set ROOT accordingly
+if [[ "$(uname)" == "Darwin" ]]; then
+    ROOT="/Volumes/data-and-model"
+else
+    ROOT="/mnt/data-and-model"
+fi
 
 # Check if the root folder exists
 if [ ! -d "$ROOT" ]; then

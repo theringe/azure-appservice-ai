@@ -1,2 +1,6 @@
 # skip python virtual environment folder
 .venv/
+
+# scikit-learn:
+# sample training model
+scikit-learn/heart_disease_model.joblib
