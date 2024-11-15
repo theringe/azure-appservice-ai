@@ -10,6 +10,11 @@ numpy==1.21.6
 scikit-learn==1.0.2
 scipy==1.7.3
 threadpoolctl==3.1.0
-typing-extensions==4.10.0
 Werkzeug==2.2.3
 zipp==3.15.0
+
+# Specific version of typing-extensions is required for different Python versions
+# From Azure App Service for Linux python 3.9 image, it need [4.10.0]
+# From My Windows 11 with python 3.7.4, it need [4.7.1]
+# So let's just use the latest version
+typing-extensions
