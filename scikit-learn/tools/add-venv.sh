@@ -13,8 +13,8 @@ for env in scikit-learn-webjob scikit-learn; do
     if [ ! -d "$VENV_PATH" ]; then
         python -m venv "$VENV_PATH"
         source "$VENV_PATH/bin/activate"
-        requirements="$ROOT/requirements.txt"
-        [ "$env" == "scikit-learn-webjob" ] && requirements="$ROOT/webjob/requirements.txt"
+        requirements="$ROOT/scikit-learn/requirements.txt"
+        [ "$env" == "scikit-learn-webjob" ] && requirements="$ROOT/scikit-learn/webjob/requirements.txt"
         "$VENV_PATH/bin/pip" install -r "$requirements"
         deactivate
     fi

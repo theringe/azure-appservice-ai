@@ -16,5 +16,6 @@ zipp==3.15.0
 # Specific version of typing-extensions is required for different Python versions
 # From Azure App Service for Linux python 3.9 image, it need [4.10.0]
 # From My Windows 11 with python 3.7.4, it need [4.7.1]
+# From My Linux (Ubuntu 18.04 Bionic Beaver) with python 3.7.3, it need [4.7.1]
 # So let's just use the latest version
 typing-extensions
