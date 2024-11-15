@@ -1,3 +1,9 @@
+# skip IDE
+.idea/
+.vscode/
+.vscode-test/
+.vs/
+
 # skip python virtual environment folder
 .venv/
 

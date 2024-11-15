@@ -60,19 +60,3 @@ print(f"Model saved as {timestamped_model_path}")
 # Replace (or create) the final model file with the latest model using copyfile to avoid permission issues
 shutil.copyfile(timestamped_model_path, FINAL_MODEL_PATH)
 print(f"Final model file updated to {FINAL_MODEL_PATH}")
-
-# Step 7: Copy to the ../api folder relative to this script, or to a specific location if on Azure Web App
-if os.name != 'nt' and "WEBSITE_INSTANCE_ID" in os.environ:
-    destination_path = "/home/site/wwwroot/api"
-else:
-    # Get the path of the current script's directory
-    script_dir = os.path.dirname(__file__)
-    # Define the destination as "../api" relative to the script directory
-    destination_path = os.path.join(script_dir, "..", "api")
-
-# Ensure the destination folder exists
-os.makedirs(destination_path, exist_ok=True)
-# Copy the final model to the destination using copyfile to avoid permission issues
-destination_model_path = os.path.join(destination_path, "heart_disease_model.joblib")
-shutil.copyfile(FINAL_MODEL_PATH, destination_model_path)
-print(f"Model also copied to {destination_model_path}")

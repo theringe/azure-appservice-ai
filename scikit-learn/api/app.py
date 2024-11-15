@@ -2,11 +2,20 @@ from flask import Flask, request, jsonify
 import joblib
 import os
 import threading
+import platform
 
 app = Flask(__name__)
 
-# Define the path to the model
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "heart_disease_model.joblib")
+# Determine the correct path for the model based on platform and environment
+if os.name == 'nt':  # Windows
+    MODEL_PATH = r"Z:\scikit-learn\model\heart_disease_model.joblib"
+elif platform.system() == 'Darwin':  # macOS
+    MODEL_PATH = "/Volumes/data-and-model/scikit-learn/model/heart_disease_model.joblib"
+else:  # Linux or Azure
+    if "WEBSITE_INSTANCE_ID" in os.environ:  # Detecting Azure
+        MODEL_PATH = "/data-and-model/scikit-learn/model/heart_disease_model.joblib"
+    else:
+        MODEL_PATH = "/mnt/data-and-model/scikit-learn/model/heart_disease_model.joblib"
 
 # Initialize model, lock, and last modified time
 model = None
@@ -38,11 +47,6 @@ def detect():
 
     # Get the JSON data
     data = request.get_json()
-
-    # Check if 'info' parameter is present in the data
-    if not data or 'info' not in data:
-        return jsonify({"error": "Missing 'info' parameter"}), 400
-    
     info = data['info']
 
     try:
@@ -56,4 +60,4 @@ def detect():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=8000)
