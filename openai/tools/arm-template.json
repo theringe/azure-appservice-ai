@@ -1,0 +1,192 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourcePrefix": {
+            "type": "string",
+            "defaultValue": "[concat('openai', '-', 'arm', '-', uniqueString(newGuid()))]",
+            "metadata": {
+                "description": "Do not modify this name"
+            }
+        }
+    },
+    "variables": {
+        "storageAccountName": "[concat(replace(parameters('resourcePrefix'),'-', ''), 'sa')]",
+        "storageAccountSkuName": "Standard_LRS",
+        "storageAccountSupportsHttpsTrafficOnly": true,
+        "storageAccountMinimumTlsVersion": "TLS1_2",
+        "storageAccountDefaultToOAuthAuthentication": true,
+        "storageAccountIsShareSoftDeleteEnabled": true,
+        "storageAccountShareSoftDeleteRetentionDays": 7,
+        "storageAccountFileShareName": "data-and-model",
+        "storageAccountFileShareShareQuota": 5120,
+        "storageAccountFileShareEnabledProtocols": "SMB",
+        "planName": "[concat(parameters('resourcePrefix'), '-', 'asp')]",
+        "planKind": "linux",
+        "planSkuTier": "Premium0V3",
+        "planSkuName": "P0v3",
+        "planWorkerSize": "0",
+        "planWorkerSizeId": "0",
+        "planNumberOfWorkers": "1",
+        "planReserved": true,
+        "appName": "[concat(parameters('resourcePrefix'), '-', 'app')]",
+        "appKind": "app,linux",
+        "appSiteConfigAppSettingsWEBSITES_CONTAINER_START_TIME_LIMIT": "600",
+        "appSiteConfigAppSettingsWEBSITES_ENABLE_APP_SERVICE_STORAGE": true,
+        "appSiteConfigLinuxFxVersion": "PYTHON|3.9",
+        "appSiteConfigAlwaysOn": true,
+        "appSiteConfigAppCommandLine": "[ -f /home/site/wwwroot/start.sh ] && bash /home/site/wwwroot/start.sh || GUNICORN_CMD_ARGS=\"--timeout 600 --access-logfile '-' --error-logfile '-' -c /opt/startup/gunicorn.conf.py --chdir=/opt/defaultsite\" gunicorn application:app",
+        "appSiteConfigFtpsState": "FtpsOnly",
+        "appSiteConfigAzureStorageAccountsType": "AzureFiles",
+        "appSiteConfigAzureStorageAccountsProtocol": "Smb",
+        "appClientAffinityEnabled": false,
+        "appHttpsOnly": true,
+        "appPublicNetworkAccess": "Enabled",
+        "appServerFarmId": "[concat('subscriptions/', subscription().subscriptionId, '/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('planName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2023-04-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('storageAccountName')]",
+            "tags": {},
+            "sku": {
+                "name": "[variables('storageAccountSkuName')]"
+            },
+            "properties": {
+                "supportsHttpsTrafficOnly": "[variables('storageAccountSupportsHttpsTrafficOnly')]",
+                "minimumTlsVersion": "[variables('storageAccountMinimumTlsVersion')]",
+                "defaultToOAuthAuthentication": "[variables('storageAccountDefaultToOAuthAuthentication')]"
+            }
+        },
+        {
+            "apiVersion": "2023-04-01",
+            "type": "Microsoft.Storage/storageAccounts/fileservices",
+            "name": "[concat(variables('storageAccountName'), '/default')]",
+            "properties": {
+                "shareDeleteRetentionPolicy": {
+                "enabled": "[variables('storageAccountIsShareSoftDeleteEnabled')]",
+                "days": "[variables('storageAccountShareSoftDeleteRetentionDays')]"
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+            ]
+        },
+        {
+            "apiVersion": "2023-04-01",
+            "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+            "location": "[resourceGroup().location]",
+            "name": "[concat(variables('storageAccountName'), '/default/', variables('storageAccountFileShareName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageAccountName'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+            ],
+            "properties": {
+                "shareQuota": "[variables('storageAccountFileShareShareQuota')]",
+                "enabledProtocols": "[variables('storageAccountFileShareEnabledProtocols')]"
+            }
+        },
+        {
+            "apiVersion": "2023-07-01",
+            "type": "Microsoft.Resources/deployments",
+            "name": "ASPResourcesDeployment",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "apiVersion": "2023-12-01",
+                            "type": "Microsoft.Web/serverfarms",
+                            "location": "[resourceGroup().location]",
+                            "name": "[variables('planName')]",
+                            "kind": "[variables('planKind')]",
+                            "sku": {
+                                "Tier": "[variables('planSkuTier')]",
+                                "Name": "[variables('planSkuName')]"
+                            },
+                            "tags": {},
+                            "dependsOn": [],
+                            "properties": {
+                                "name": "[variables('planName')]",
+                                "workerSize": "[variables('planWorkerSize')]",
+                                "workerSizeId": "[variables('planWorkerSizeId')]",
+                                "numberOfWorkers": "[variables('planNumberOfWorkers')]",
+                                "reserved": "[variables('planReserved')]"
+                            }
+                        },
+                        {
+                            "apiVersion": "2023-12-01",
+                            "type": "Microsoft.Web/sites",
+                            "location": "[resourceGroup().location]",
+                            "name": "[variables('appName')]",
+                            "kind": "[variables('appKind')]",
+                            "tags": {},
+                            "dependsOn": [
+                                "[concat('Microsoft.Web/serverfarms/', variables('planName'))]"
+                            ],
+                            "properties": {
+                                "name": "[variables('appName')]",
+                                "siteConfig": {
+                                    "appSettings": [
+                                        {
+                                            "name": "WEBSITES_CONTAINER_START_TIME_LIMIT",
+                                            "value": "[variables('appSiteConfigAppSettingsWEBSITES_CONTAINER_START_TIME_LIMIT')]"
+                                        },
+                                        {
+                                            "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+                                            "value": "[variables('appSiteConfigAppSettingsWEBSITES_ENABLE_APP_SERVICE_STORAGE')]"
+                                        }
+                                    ],
+                                    "linuxFxVersion": "[variables('appSiteConfigLinuxFxVersion')]",
+                                    "alwaysOn": "[variables('appSiteConfigAlwaysOn')]",
+                                    "appCommandLine": "[variables('appSiteConfigAppCommandLine')]",
+                                    "ftpsState": "[variables('appSiteConfigFtpsState')]",
+                                    "azureStorageAccounts": {
+                                        "[variables('storageAccountFileShareName')]": {
+                                            "type": "[variables('appSiteConfigAzureStorageAccountsType')]",
+                                            "accountName": "[variables('storageAccountName')]",
+                                            "shareName": "[variables('storageAccountFileShareName')]",
+                                            "mountPath": "[concat('/', variables('storageAccountFileShareName'))]",
+                                            "protocol": "[variables('appSiteConfigAzureStorageAccountsProtocol')]",
+                                            "accessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2022-05-01').keys[0].value]"
+                                        }
+                                    }
+                                },
+                                "clientAffinityEnabled": "[variables('appClientAffinityEnabled')]",
+                                "httpsOnly": "[variables('appHttpsOnly')]",
+                                "publicNetworkAccess": "[variables('appPublicNetworkAccess')]",
+                                "serverFarmId": "[variables('appServerFarmId')]"
+                            },
+                            "resources": [
+                            ]
+                        }
+                    ],
+                    "outputs": {}
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "outputStorageName": {
+            "type": "string",
+            "value": "[variables('storageAccountName')]"
+        },
+        "outputShareName": {
+            "type": "string",
+            "value": "[variables('storageAccountFileShareName')]"
+        },
+        "outputStorageKey": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2022-05-01').keys[0].value]"
+        }
+    }
+}

@@ -4,9 +4,17 @@
 .vscode-test/
 .vs/
 
+# skip for local testing
+.docker/
+.temp/
+
 # skip python virtual environment folder
 .venv/
 
 # scikit-learn:
 # sample training model
 scikit-learn/api/heart_disease_model.joblib
+
+# openai:
+# OpenAI api key
+openai/tools/apikey.txt
