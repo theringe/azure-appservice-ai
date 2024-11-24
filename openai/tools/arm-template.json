@@ -13,11 +13,12 @@
     "variables": {
         "storageAccountName": "[concat(replace(parameters('resourcePrefix'),'-', ''), 'sa')]",
         "storageAccountSkuName": "Standard_LRS",
-        "storageAccountSupportsHttpsTrafficOnly": true,
-        "storageAccountMinimumTlsVersion": "TLS1_2",
-        "storageAccountDefaultToOAuthAuthentication": true,
-        "storageAccountIsShareSoftDeleteEnabled": true,
-        "storageAccountShareSoftDeleteRetentionDays": 7,
+        "storageAccountPropertiesSupportsHttpsTrafficOnly": true,
+        "storageAccountPropertiesMinimumTlsVersion": "TLS1_2",
+        "storageAccountPropertiesDefaultToOAuthAuthentication": true,
+        "storageAccountPropertiesAllowSharedKeyAccess": true,
+        "storageAccountFileservicesPropertiesIsShareSoftDeleteEnabled": true,
+        "storageAccountFileservicesPropertiesShareSoftDeleteRetentionDays": 7,
         "storageAccountFileShareName": "data-and-model",
         "storageAccountFileShareShareQuota": 5120,
         "storageAccountFileShareEnabledProtocols": "SMB",
@@ -33,6 +34,7 @@
         "appKind": "app,linux",
         "appSiteConfigAppSettingsWEBSITES_CONTAINER_START_TIME_LIMIT": "600",
         "appSiteConfigAppSettingsWEBSITES_ENABLE_APP_SERVICE_STORAGE": true,
+        "appSiteConfigAppSettingsSCM_DO_BUILD_DURING_DEPLOYMENT": false,
         "appSiteConfigLinuxFxVersion": "PYTHON|3.9",
         "appSiteConfigAlwaysOn": true,
         "appSiteConfigAppCommandLine": "[ -f /home/site/wwwroot/start.sh ] && bash /home/site/wwwroot/start.sh || GUNICORN_CMD_ARGS=\"--timeout 600 --access-logfile '-' --error-logfile '-' -c /opt/startup/gunicorn.conf.py --chdir=/opt/defaultsite\" gunicorn application:app",
@@ -55,9 +57,10 @@
                 "name": "[variables('storageAccountSkuName')]"
             },
             "properties": {
-                "supportsHttpsTrafficOnly": "[variables('storageAccountSupportsHttpsTrafficOnly')]",
-                "minimumTlsVersion": "[variables('storageAccountMinimumTlsVersion')]",
-                "defaultToOAuthAuthentication": "[variables('storageAccountDefaultToOAuthAuthentication')]"
+                "supportsHttpsTrafficOnly": "[variables('storageAccountPropertiesSupportsHttpsTrafficOnly')]",
+                "minimumTlsVersion": "[variables('storageAccountPropertiesMinimumTlsVersion')]",
+                "defaultToOAuthAuthentication": "[variables('storageAccountPropertiesDefaultToOAuthAuthentication')]",
+                "allowSharedKeyAccess": "[variables('storageAccountPropertiesAllowSharedKeyAccess')]"
             }
         },
         {
@@ -66,8 +69,8 @@
             "name": "[concat(variables('storageAccountName'), '/default')]",
             "properties": {
                 "shareDeleteRetentionPolicy": {
-                "enabled": "[variables('storageAccountIsShareSoftDeleteEnabled')]",
-                "days": "[variables('storageAccountShareSoftDeleteRetentionDays')]"
+                "enabled": "[variables('storageAccountFileservicesPropertiesIsShareSoftDeleteEnabled')]",
+                "days": "[variables('storageAccountFileservicesPropertiesShareSoftDeleteRetentionDays')]"
                 }
             },
             "dependsOn": [
@@ -144,6 +147,10 @@
                                         {
                                             "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
                                             "value": "[variables('appSiteConfigAppSettingsWEBSITES_ENABLE_APP_SERVICE_STORAGE')]"
+                                        },
+                                        {
+                                            "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+                                            "value": "[variables('appSiteConfigAppSettingsSCM_DO_BUILD_DURING_DEPLOYMENT')]"
                                         }
                                     ],
                                     "linuxFxVersion": "[variables('appSiteConfigLinuxFxVersion')]",

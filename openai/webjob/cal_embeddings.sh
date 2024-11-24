@@ -31,7 +31,7 @@ fi
 echo "Activated virtual environment: $VENV_PATH"
 
 # Run the Python script
-python /home/site/wwwroot/webjob/cal_embeddings.py
+python /home/site/wwwroot/webjob/cal_embeddings.py --sampling_ratio 0.002
 
 # Deactivate the virtual environment
 deactivate
