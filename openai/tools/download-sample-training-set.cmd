@@ -6,7 +6,7 @@ set "UNZIP_FOLDER=%ROOT%\headlines"
 
 REM Step 1: Download the ZIP file if it does not already exist
 if not exist "%ZIP_FILE%" (
-    echo Downloading heart disease dataset...
+    echo Downloading headlines dataset...
     powershell -command "Invoke-WebRequest -Uri %ZIP_URL% -OutFile %ZIP_FILE%"
 ) else (
     echo ZIP file already exists, skipping download.

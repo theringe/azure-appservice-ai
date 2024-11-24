@@ -14,7 +14,7 @@ TMP_DIR="/tmp/headlines"
 
 # Step 1: Download the ZIP file if it does not already exist
 if [ ! -f "$ZIP_FILE" ]; then
-    echo "Downloading heart disease dataset..."
+    echo "Downloading headlines dataset..."
     wget -O "$ZIP_FILE" "$ZIP_URL"
 else
     echo "ZIP file already exists, skipping download."
