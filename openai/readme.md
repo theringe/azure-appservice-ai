@@ -1,7 +1,7 @@
-# How to use OpenAI on Azure Web App
+# Using OpenAI on Azure Web App
 
 ---
 
 ### Related Blog
 
-[How to use OpenAI on Azure Web App (TBA)](https://techcommunity.microsoft.com/blog/appsonazureblog/#)
+[Using OpenAI on Azure Web App](https://techcommunity.microsoft.com/blog/AppsonAzureBlog/using-openai-on-azure-web-app/4334985)
