@@ -1,4 +1,4 @@
-param resourcePrefix string = 'openai-arm-${uniqueString(newGuid())}'
+param resourcePrefix string = 'tensorflow-bicep-${uniqueString(newGuid())}'
 
 var storageAccountName = '${replace(resourcePrefix, '-', '')}sa'
 var storageAccountSkuName = 'Standard_LRS'
