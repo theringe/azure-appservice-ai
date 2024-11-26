@@ -49,6 +49,7 @@ def detect():
 
     # Predict
     prediction = model.predict(padded)
+    # print(prediction)  # Log predicted probabilities
     predicted_class = label_classes[prediction.argmax()]
 
     return jsonify({"MBTI": predicted_class})
