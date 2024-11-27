@@ -23,7 +23,7 @@ var planReserved = true
 
 var appName = '${resourcePrefix}-app'
 var appKind = 'app,linux'
-var appSiteConfigAppSettingsWEBSITES_CONTAINER_START_TIME_LIMIT = '600'
+var appSiteConfigAppSettingsWEBSITES_CONTAINER_START_TIME_LIMIT = '1200'
 var appSiteConfigAppSettingsWEBSITES_ENABLE_APP_SERVICE_STORAGE = true
 var appSiteConfigAppSettingsSCM_DO_BUILD_DURING_DEPLOYMENT = false
 var appSiteConfigLinuxFxVersion = 'PYTHON|3.9'

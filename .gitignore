@@ -18,3 +18,7 @@ scikit-learn/api/heart_disease_model.joblib
 # openai:
 # OpenAI api key
 openai/tools/apikey.txt
+
+# tensorflow:
+# Azure DevOps pipeline configuration
+tensorflow/azure-pipeline.yml

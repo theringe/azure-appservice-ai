@@ -1,1 +1,28 @@
-TBA
+trigger:
+  - master
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  azureSubscription: "<service-connection>" # Azure Resource Manager service connection
+  resourceGroupName: "<Resource-group-name>" # Resource group name
+  webAppName: "Web-App-name" # Web App name
+  folderToPublish: "tensorflow" # do not change this value
+
+jobs:
+  - job: Deploy
+    displayName: "Deploy TensorFlow Code"
+    steps:
+      - task: UsePythonVersion@1
+        inputs:
+          versionSpec: "3.x"
+          addToPath: true
+
+      - task: AzureWebApp@1
+        displayName: "Deploy to Azure Web App"
+        inputs:
+          azureSubscription: "$(azureSubscription)"
+          ResourceGroupName: "$(resourceGroupName)"
+          appName: "$(webAppName)"
+          package: "$(Build.SourcesDirectory)/$(folderToPublish)"
