@@ -1,0 +1,31 @@
+trigger:
+  - master
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  azureSubscription: "azure-appservice-ai-tensorflow"
+  resourceGroupName: "azure-appservice-ai"
+  webAppName: "tensorflow-bicep-app"
+  folderToPublish: "tensorflow"
+
+stages:
+  - stage: DeployToWebApp
+    displayName: "Deploy TensorFlow Subfolder to Azure Web App"
+    jobs:
+      - job: Deploy
+        displayName: "Deploy TensorFlow Code"
+        steps:
+          - task: UsePythonVersion@1
+            inputs:
+              versionSpec: "3.x"
+              addToPath: true
+
+          - task: AzureWebApp@1
+            displayName: "Deploy to Azure Web App"
+            inputs:
+              azureSubscription: "$(azureSubscription)"
+              ResourceGroupName: "$(resourceGroupName)"
+              appName: "$(webAppName)"
+              package: "$(Build.SourcesDirectory)/$(folderToPublish)"
