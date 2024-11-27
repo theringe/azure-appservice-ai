@@ -13,13 +13,13 @@ VENV_BASE="/home/.venv"
 LATEST_EPOCH=$(ls -1d $VENV_BASE/* | sort -n | tail -1)
 
 # Check if a valid epoch folder exists
-if [ -z "$LATEST_EPOCH" ] || [ ! -d "$LATEST_EPOCH/openai-webjob" ]; then
+if [ -z "$LATEST_EPOCH" ] || [ ! -d "$LATEST_EPOCH/tensorflow-webjob" ]; then
     echo "No valid virtual environment found in $VENV_BASE."
     exit 1
 fi
 
 # Activate the virtual environment
-VENV_PATH="$LATEST_EPOCH/openai-webjob"
+VENV_PATH="$LATEST_EPOCH/tensorflow-webjob"
 source "$VENV_PATH/bin/activate"
 
 # Check if activation was successful
