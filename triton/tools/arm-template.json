@@ -28,8 +28,6 @@
       "caeNamePropertiesZoneRedundant": false,
       "caeNamePropertiesAppLogsConfigurationDestination": "azure-monitor",
       "caeNamePropertiesPublicNetworkAccess": "Enabled",
-
-
       "appName": "[concat(parameters('resourcePrefix'), '-', 'app')]",
       "appPropertiesConfigurationActiveRevisionsMode": "Single",
       "appPropertiesConfigurationIngressExternal": true,
@@ -187,4 +185,3 @@
         }
     }
   }
-  
