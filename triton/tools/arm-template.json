@@ -173,15 +173,15 @@
                 }
               }
             ],
-            "outputs": {}
-          }
+            "outputs": {
+                "acaEndpoint": {
+                    "type": "string",
+                    "value": "[concat('https://', reference(resourceId('Microsoft.App/containerApps', variables('appName')), '2024-08-02-preview').properties.configuration.ingress.fqdn)]"
+                }
+            }
+                  }
         }
       }
     ],
-    "outputs": {
-        "acaEndpoint": {
-            "type": "string",
-            "value": "[concat('https://', reference(resourceId('Microsoft.App/containerApps', variables('appName')), '2024-08-02-preview').properties.configuration.ingress.fqdn)]"
-        }
-    }
+    "outputs": {}
   }
