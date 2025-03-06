@@ -1,0 +1,190 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "resourcePrefix": {
+        "type": "string",
+        "defaultValue": "[concat('triton', '-', 'arm', '-', uniqueString(newGuid()))]",
+        "metadata": {
+          "description": "Do not modify this name"
+        }
+      }
+    },
+    "variables": {
+      "storageAccountName": "[concat(replace(parameters('resourcePrefix'),'-', ''), 'sa')]",
+      "storageAccountSkuName": "Standard_LRS",
+      "storageAccountRropertiesSupportsHttpsTrafficOnly": true,
+      "storageAccountRropertiesMinimumTlsVersion": "TLS1_2",
+      "storageAccountRropertiesAllowSharedKeyAccess": true,
+      "storageAccountContainerName": "data-and-model",
+      "storageAccountContainerPropertiesPublicAccess": "None",
+      "scriptName": "[concat(replace(parameters('resourcePrefix'),'-', ''), 'sh')]",
+      "scriptKind": "AzureCLI",
+      "scriptPropertiesForceUpdateTag": "1",
+      "scriptPropertiesAzCliVersion": "2.67.0",
+      "scriptPropertiesCleanupPreference": "Always",
+      "scriptPropertiesRetentionInterval": "P1D",
+      "caeName": "[concat(parameters('resourcePrefix'), '-', 'cae')]",
+      "caeNamePropertiesZoneRedundant": false,
+      "caeNamePropertiesAppLogsConfigurationDestination": "azure-monitor",
+      "caeNamePropertiesPublicNetworkAccess": "Enabled",
+
+
+      "appName": "[concat(parameters('resourcePrefix'), '-', 'app')]",
+      "appPropertiesConfigurationActiveRevisionsMode": "Single",
+      "appPropertiesConfigurationIngressExternal": true,
+      "appPropertiesConfigurationIngressTransport": "Auto",
+      "appPropertiesConfigurationIngressAllowInsecure": true,
+      "appPropertiesConfigurationIngressTargetPort": 8000,
+      "appPropertiesConfigurationIngressStickySessionsAffinity": "none",
+      "appPropertiesTemplateContainers0Image": "nvcr.io/nvidia/tritonserver:22.04-py3",
+      "appPropertiesTemplateContainers0Command": "tritonserver",
+      "appPropertiesTemplateContainers0ResourcesCpu": 0.25,
+      "appPropertiesTemplateContainers0ResourcesMemory": ".5Gi",
+      "appPropertiesTemplateScaleMinReplicas": 0
+    },
+    "resources": [
+      {
+        "apiVersion": "2022-05-01",
+        "type": "Microsoft.Storage/storageAccounts",
+        "location": "[resourceGroup().location]",
+        "name": "[variables('storageAccountName')]",
+        "sku": {
+          "name": "[variables('storageAccountSkuName')]"
+        },
+        "properties": {
+          "supportsHttpsTrafficOnly": "[variables('storageAccountRropertiesSupportsHttpsTrafficOnly')]",
+          "minimumTlsVersion": "[variables('storageAccountRropertiesMinimumTlsVersion')]",
+          "allowSharedKeyAccess": "[variables('storageAccountRropertiesAllowSharedKeyAccess')]"
+        }
+      },
+      {
+        "apiVersion": "2022-05-01",
+        "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+        "name": "[concat(variables('storageAccountName'), '/default/', variables('storageAccountContainerName'))]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+        ],
+        "properties": {
+          "publicAccess": "[variables('storageAccountContainerPropertiesPublicAccess')]"
+        }
+      },
+      {
+        "apiVersion": "2017-05-10",
+        "type": "Microsoft.Resources/deployments",
+        "name": "NestedResourcesDeployment",
+        "dependsOn": [
+          "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+        ],
+        "properties": {
+          "mode": "Incremental",
+          "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {},
+            "variables": {},
+            "resources": [
+              {
+                "type": "Microsoft.Resources/deploymentScripts",
+                "apiVersion": "2020-10-01",
+                "kind": "[variables('scriptKind')]",
+                "name": "[variables('scriptName')]",
+                "location": "[resourceGroup().location]",
+                "dependsOn": [],
+                "properties": {
+                  "forceUpdateTag": "[variables('scriptPropertiesForceUpdateTag')]",
+                  "azCliVersion": "[variables('scriptPropertiesAzCliVersion')]",
+                  "scriptContent": "[concat('tdnf install azcopy git wget tar -y; ','SAS_TOKEN=$(az storage container generate-sas --account-name ', variables('storageAccountName'), ' --account-key \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value, '\" --name data-and-model --permissions wac --start 2025-03-05T06:00:00Z --expiry 2025-03-06T06:00:00Z --https-only --output tsv); ','SAS_TOKEN=\"?${SAS_TOKEN}\"; ','git clone --no-checkout https://github.com/triton-inference-server/server.git; ','cd server; ','git sparse-checkout init --cone; ','git sparse-checkout set docs/examples; ','git checkout main; ','cd docs/examples/; ','./fetch_models.sh; ','azcopy copy \"model_repository/*\" \"https://', variables('storageAccountName'), '.blob.core.windows.net/data-and-model${SAS_TOKEN}\" --recursive')]",
+                  "cleanupPreference": "[variables('scriptPropertiesCleanupPreference')]",
+                  "retentionInterval": "[variables('scriptPropertiesRetentionInterval')]"
+                }
+              },
+              {
+                "apiVersion": "2024-08-02-preview",
+                "type": "Microsoft.App/managedEnvironments",
+                "name": "[variables('caeName')]",
+                "location": "[resourceGroup().location]",
+                "dependsOn": [
+                  "[resourceId('Microsoft.Resources/deploymentScripts', variables('scriptName'))]"
+                ],
+                "properties": {
+                  "zoneRedundant": "[variables('caeNamePropertiesZoneRedundant')]",
+                  "appLogsConfiguration": {
+                    "destination": "[variables('caeNamePropertiesAppLogsConfigurationDestination')]"
+                  },
+                  "publicNetworkAccess": "[variables('caeNamePropertiesPublicNetworkAccess')]"
+                }
+              },
+              {
+                "apiVersion": "2024-08-02-preview",
+                "name": "[variables('appName')]",
+                "type": "Microsoft.App/containerApps",
+                "kind": "containerapps",
+                "location": "[resourceGroup().location]",
+                "dependsOn": [
+                  "[concat('Microsoft.App/managedEnvironments/', variables('caeName'))]"
+                ],
+                "properties": {
+                  "environmentId": "[resourceId('Microsoft.App/managedEnvironments', variables('caeName'))]",
+                  "configuration": {
+                    "secrets": [],
+                    "registries": [],
+                    "activeRevisionsMode": "[variables('appPropertiesConfigurationActiveRevisionsMode')]",
+                    "ingress": {
+                      "external": "[variables('appPropertiesConfigurationIngressExternal')]",
+                      "transport": "[variables('appPropertiesConfigurationIngressTransport')]",
+                      "allowInsecure": "[variables('appPropertiesConfigurationIngressAllowInsecure')]",
+                      "targetPort": "[variables('appPropertiesConfigurationIngressTargetPort')]",
+                      "stickySessions": {
+                        "affinity": "[variables('appPropertiesConfigurationIngressStickySessionsAffinity')]"
+                      },
+                      "additionalPortMappings": []
+                    }
+                  },
+                  "template": {
+                    "containers": [
+                      {
+                        "name": "[variables('appName')]",
+                        "image": "[variables('appPropertiesTemplateContainers0Image')]",
+                        "command": [
+                          "[variables('appPropertiesTemplateContainers0Command')]"
+                        ],
+                        "args": [
+                          "[concat('--model-repository=as://', variables('storageAccountName'), '/', variables('storageAccountContainerName'))]"
+                        ],
+                        "resources": {
+                          "cpu": "[variables('appPropertiesTemplateContainers0ResourcesCpu')]",
+                          "memory": "[variables('appPropertiesTemplateContainers0ResourcesMemory')]"
+                        },
+                        "env": [
+                          {
+                            "name": "AZURE_STORAGE_ACCOUNT",
+                            "value": "[variables('storageAccountName')]"
+                          },
+                          {
+                            "name": "AZURE_STORAGE_KEY",
+                            "value": "[concat('', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+                          }
+                        ]
+                      }
+                    ],
+                    "scale": {
+                      "minReplicas": "[variables('appPropertiesTemplateScaleMinReplicas')]"
+                    }
+                  }
+                }
+              }
+            ],
+            "outputs": {}
+          }
+        }
+      }
+    ],
+    "outputs": {
+        "acaEndpoint": {
+            "type": "string",
+            "value": "[concat('https://', reference(resourceId('Microsoft.App/containerApps', variables('appName')), '2024-08-02-preview').properties.configuration.ingress.fqdn)]"
+        }
+    }
+  }
+  
